@@ -1,0 +1,3 @@
+[submodule "ros-solution/RoboticsAcademy"]
+	path = ros-solution/RoboticsAcademy
+	url = https://github.com/JdeRobot/RoboticsAcademy

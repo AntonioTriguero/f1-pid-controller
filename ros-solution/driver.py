@@ -12,7 +12,7 @@ from agent import Agent
 
 time_cycle = 80
 
-class MyAlgorithm(threading.Thread):
+class Driver(threading.Thread):
 
     def __init__(self, camera, motors):
         self.camera = camera
