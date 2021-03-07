@@ -24,7 +24,7 @@ github_username: AntonioTriguero
 minimal_mistakes_skin: dark
 search: true
 logo: ./logo.png
-site_url: https://antoniotriguero.github.io/f1-pid-controller/f1-pid-controller
+site_url: https://antoniotriguero.github.io/f1-pid-controller
 
 # Build settings
 markdown: kramdown
