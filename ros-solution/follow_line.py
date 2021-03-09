@@ -24,6 +24,7 @@
 
 # General imports
 import sys
+import os
 
 # Practice imports
 sys.path.insert(1, './RoboticsAcademy/exercises/follow_line')

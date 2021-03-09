@@ -1,6 +1,8 @@
 
 ## Instructions for running
 
+### Local
+
 ```
 1. roslaunch ./RoboticsAcademy/exercises/follow_line/launch/simple_line_follower_ros.launch
 

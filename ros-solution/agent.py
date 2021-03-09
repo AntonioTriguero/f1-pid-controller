@@ -5,8 +5,8 @@ import random
 class Agent:
 
     def __init__(self):
-        self.last_error = None
-        self.focuspoint = None
+        self.last_herror = 0
+        self.last_verror = 0
 
     '''Artificial Vision Methods'''
     def color_segmentation(self, image, lower=[0, 0, 0], upper=[255, 0, 255]):
@@ -24,7 +24,7 @@ class Agent:
         
         return res
 
-    def linecenter_at(self, image, h):
+    def get_linecenter(self, image, h):
         original_img = np.copy(image)
         image = self.color_segmentation(image)
 
@@ -42,37 +42,26 @@ class Agent:
 
         return center, self.draw_point(original_img, center, color=[0, 0, 255])
 
-    def get_linecenter(self, image, h):
-        h1 = h - 15
-        h2 = h1 + 200
-
-        linecenter, image = self.linecenter_at(image, h)
-        p1, image = self.linecenter_at(image, h1)
-        p2, image = self.linecenter_at(image, h2)
-
-        if any(x is None for x in [linecenter, p1, p2]):
-            curve_type = 4
-        elif abs(linecenter[1] - p1[1]) < 3 or abs(linecenter[1] - p2[1]) < 3:
-            curve_type = 0
-        elif abs(linecenter[1] - p1[1]) < 7 or abs(linecenter[1] - p2[1]) < 7:
-            curve_type = 1
-        elif abs(linecenter[1] - p1[1]) < 10 or abs(linecenter[1] - p2[1]) < 10:
-            curve_type = 2
-        else:
-            curve_type = 3
-        
-        return linecenter, curve_type, image # Return image for debugging
-
     '''Controller Methods'''
-    def error(self, image):
-        h = (image.shape[0] // 16) * 9
-        
-        image = self.draw_point(image, self.focuspoint, color=[0, 255, 0])
+    def herror(self, image, focuspoint):
+        image = self.draw_point(image, focuspoint, color=[0, 255, 0])
 
-        linecenter, is_rectline, image = self.get_linecenter(image, self.focuspoint[0])
+        linecenter, image = self.get_linecenter(image, focuspoint[0])
+
         if linecenter:
-            self.last_error = float(linecenter[1] - self.focuspoint[1]) # Normalize the error
-        elif not self.last_error:
-            return -1, is_rectline, image # Search the center of the line
-        
-        return self.last_error, is_rectline, image # Return image for debugging
+            self.last_herror = float(linecenter[1] - focuspoint[1])
+        return self.last_herror, image
+
+    def verror(self, image, focuspoint, h_high, h_low):
+        linecenter, image = self.get_linecenter(image, focuspoint[0])
+        lc_high, image = self.get_linecenter(image, focuspoint[0] - h_high)
+        lc_low, image = self.get_linecenter(image, focuspoint[0] + h_low)
+
+        if linecenter and lc_high and lc_low:
+            self.last_verror = abs(float(linecenter[1] - lc_high[1])) + abs(float(linecenter[1] - lc_low[1]))
+        return self.last_verror, image
+
+    def error(self, image, focuspoint, h_high, h_low):
+        _, image = self.herror(image, focuspoint)
+        _, image = self.verror(image, focuspoint, h_high, h_low)
+        return self.last_herror, self.last_verror, image

@@ -25,12 +25,14 @@ class Driver(threading.Thread):
         self.threshold_image_lock = threading.Lock()
         self.color_image_lock = threading.Lock()
 
-        self.agent = Agent()
-        image = self.getImage()
-        h = (image.shape[0] // 16) * 9
-        self.agent.focuspoint = [h, 319]
+        ########### MY CODE ###########
 
-        self.last_e = 0
+        self.agent = Agent()
+        self.last_herror = 0
+        self.last_verror = 0
+        self.iherror = 0
+
+        ###############################
 
         threading.Thread.__init__(self, args=self.stop_event)
     
@@ -98,50 +100,43 @@ class Driver(threading.Thread):
 
         ########### MY CODE ###########
 
-        # [1] - Calculate the error
-        e, curve_type, image = self.agent.error(image) # Image with interest points
-        de = e - self.last_e
-        self.last_e = e
+        # [1] - Set hyperparameters
+        focuspoint = [(image.shape[0] // 16) * 9, 319]
+        h_high, h_low = 22, 120
 
-        # [2] - Set hyperparameters
-        if curve_type == 0:
-            kp = 0.009
-            kd = 0.01
-            kv = 0.06
-        elif curve_type == 1:
-            kp = 0.009
-            kd = 0.01
-            kv = 0.045
-        elif curve_type == 2:
-            kp = 0.009
-            kd = 0.01
-            kv = 0.04
-        elif curve_type == 3:
-            kp = 0.009
-            kd = 0.0125
-            kv = 0.03
+        is_line = self.last_verror < 10
+        if is_line:
+            maxv, kp, kd, kv, ki = 22.5, 0.01, 0.02, 0.04, 0.000017
         else:
-            kp = 0.009
-            kd = 0.0125
-            kv = 0.02
+            maxv, kp, kd, kv, ki = 13, 0.01, 0.015, 0.04, 0.000013
 
-        # [3] - Calculate output of proportional controller (angular velocity)
-        w = -(kp * e) - (kd * de)
+        # [2] - Calculate the error
+        herror, verror, image = self.agent.error(image, focuspoint, h_high, h_low) # Image with interest points
+        
+        dherror = herror - self.last_herror
+        dverror = verror - self.last_verror
+        
+        self.last_herror = herror
+        self.last_verror = verror
+        self.iherror += herror
 
+        # [3] - Calculate velocity and angular velocity
+        w = -(kp * herror) - (kd * dherror) - (ki * self.iherror)
+        v = maxv -  (kv * verror)
+
+        # [4] - Apply the changes
         self.motors.sendW(w)
-
-        # [4] - Claculate vertical velocity proportional to error
-        maxw = image.shape[1] // 2
-        v = kv * (maxw - abs(w))
-
         self.motors.sendV(v)
 
-        print 'Error = ' + str(e)
-        print 'Curve type = ' + str(curve_type)
-        print '-(kp * e) = ' + str(-(kp * e))
-        print '-(kd * de) = ' + str(-(kd * de))
-        print 'V = ' + str(v)
-        print 'W = ' + str(w)
+        # [5] - Log results 
+        print '' 
+        print '##### Errors #####'
+        print 'Horizontal error = ' + str(herror)
+        print 'Vertical errors error = ' + str(verror)
+        print '##### Velocities #####'
+        print 'Horizontal velocity = ' + str(w)
+        print 'Vertical velocity = ' + str(v)
+        print 'Intregral error = ' + str(- (ki * self.iherror))
 
         ###############################
 
