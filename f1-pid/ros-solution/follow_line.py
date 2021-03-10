@@ -27,7 +27,7 @@ import sys
 import os
 
 # Practice imports
-sys.path.insert(1, './RoboticsAcademy/exercises/follow_line')
+sys.path.insert(1, '../../RoboticsAcademy/exercises/follow_line')
 
 from gui.GUI import MainWindow
 from gui.threadGUI import ThreadGUI
